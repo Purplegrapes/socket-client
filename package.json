@@ -22,6 +22,7 @@
     "start": "craco start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "lint:fix": "npx prettier --write .",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -45,6 +46,8 @@
   "devDependencies": {
     "@craco/craco": "^7.1.0",
     "eslint": "^8.49.0",
-    "eslint-config-prettier": "^9.0.0"
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-import": "^2.28.1"
   }
 }

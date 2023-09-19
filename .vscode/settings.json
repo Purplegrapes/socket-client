@@ -1,6 +1,6 @@
 {
+  "eslint.enable": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll": true, // 保存时采用编辑器默认格式化工具格式化
-    "source.fixAll.stylelint": true // 保存样式文件时自动用stylelint插件进行格式化
+    "source.fixAll.eslint": true
   }
 }
