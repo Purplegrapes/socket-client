@@ -4,6 +4,7 @@ import socketIO from 'socket.io-client';
 import JSONInput from 'react-json-editor-ajrm';
 import { v4 } from 'uuid';
 import locale from 'react-json-editor-ajrm/locale/en';
+import './index.css';
 
 let socket = null;
 
@@ -96,8 +97,8 @@ const App = () => {
     }
   }, [meta]);
   return (
-    <div style={{ padding: '10px 20px' }}>
-      <h5>SOCKET--CLIENT</h5>
+    <div style={{ padding: '10px 20px' }} className="App">
+      <h5>SOCKET-CLIENT</h5>
       authorizationMeta:
       <JSONInput
         id="authorization"
