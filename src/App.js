@@ -104,7 +104,7 @@ const App = () => {
     >
       <Form.Item  {...{ wrapperCol: { span: 14, offset: 8 } }}>
         <h5>
-          SOCKET测试
+          SOCKET-CLIENT
         </h5>
       </Form.Item>
       <Form.Item label="socketUrl" name="url">
