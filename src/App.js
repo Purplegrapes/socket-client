@@ -1,35 +1,55 @@
 import React, { useState, useCallback } from 'react';
-import { Input, Space, Form, Button, Progress, message, Alert } from 'antd';
+import { Space, Button, Progress, message, Alert } from 'antd';
 import socketIO from "socket.io-client";
 import JSONInput from 'react-json-editor-ajrm';
 import { v4 } from 'uuid'
 import locale from "react-json-editor-ajrm/locale/en";
-import style from './App.css';
 
 let socket = null;
 
 const ERROR = 'ERROR';
 const PROGRESS = 'PROGRESS_TASK';
 
+const defaultUrl =  "http://api4.betalpha.com:81/socket";
+const defaultToken = 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1MDgzNTQ0NC0xZjY5LTRmNTEtYmZlMy02ZGQyNDJiZDdmZTgiLCJleHAiOjM2ODk4NDE4MTksImF1dGhvcml0aWVzIjpbIlVTRVIiXSwianRpIjoiNWcxOHM5aVJtbFIyNDRXSE1sY2VoSmdESG0wIiwiY2xpZW50X2lkIjoib2ZmaWNpYWxfd2Vic2l0ZSIsInNjb3BlIjpbInJpc2tTeXN0ZW0iXX0.iLNVOa83FYsIywZ0mGEcxS-77X1lw_fN5O3onzNi_eRZ9RXN9MU1H9zWJvD-8TeYhOGVRCbxmEhNyYwxxKFRxdantl0gCyy70ZYLUOoJI3cqYA0dR3cNMgLxVIvAH1d51kb35W8P-AN9BNX-UmBxjlNBHB7Ladd_BvDVnGdBXq3sAY4IHaEKdf0T3kR9gVU2wsGmppN6PJlDsPqGkKTfuapjVS1odhNMydald3SAbjmWCjW6M36OdkMPAiFI9E69LvkYs6ZacBLKW_wVtkPHrZuuTEPoHs5hAUOi45Fp32U9V6RroNKQqUUU3GScRqBGKONhj2Kecm5p3fbqGrLtrA'
+
 const App = () => {
 
-  const [form] = Form.useForm();
-  const [meta, setMeta] = useState({});
-  
-  const initialValues = ({
-    url: "http://api4.betalpha.com:81/socket",
+  const [meta, setMeta] = useState({
     startEventName: 'START_FUND_DETAIL_TAG_FILTER',
     finishEventName: 'FINISH_FUND_DETAIL_TAG_FILTER',
-    token: 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1MDgzNTQ0NC0xZjY5LTRmNTEtYmZlMy02ZGQyNDJiZDdmZTgiLCJleHAiOjM2ODk4NDE4MTksImF1dGhvcml0aWVzIjpbIlVTRVIiXSwianRpIjoiNWcxOHM5aVJtbFIyNDRXSE1sY2VoSmdESG0wIiwiY2xpZW50X2lkIjoib2ZmaWNpYWxfd2Vic2l0ZSIsInNjb3BlIjpbInJpc2tTeXN0ZW0iXX0.iLNVOa83FYsIywZ0mGEcxS-77X1lw_fN5O3onzNi_eRZ9RXN9MU1H9zWJvD-8TeYhOGVRCbxmEhNyYwxxKFRxdantl0gCyy70ZYLUOoJI3cqYA0dR3cNMgLxVIvAH1d51kb35W8P-AN9BNX-UmBxjlNBHB7Ladd_BvDVnGdBXq3sAY4IHaEKdf0T3kR9gVU2wsGmppN6PJlDsPqGkKTfuapjVS1odhNMydald3SAbjmWCjW6M36OdkMPAiFI9E69LvkYs6ZacBLKW_wVtkPHrZuuTEPoHs5hAUOi45Fp32U9V6RroNKQqUUU3GScRqBGKONhj2Kecm5p3fbqGrLtrA',
-  })
+    taskMeta: {
+      meta: {},
+      task: {
+        dataSourceId: "baef693e-bbee-4bb2-a4f5-66bc538d3c66",
+        locale: "zh",
+        clientVersion: "webapp",
+        taskId: v4(),
+      },
+      authorization: defaultToken,
+    },
+  });
+  const [authorizationMeta, setAuthorizationMeta] = useState({
+    url: defaultUrl,
+    startEventName: 'AUTHORIZATION',
+    socketPath: '/socket',
+    taskMeta: {
+      task: {
+        dataSourceId: "baef693e-bbee-4bb2-a4f5-66bc538d3c66",
+        locale: "zh",
+        clientVersion: "webapp",
+        taskId: v4(),
+      },
+      authorization: defaultToken,
+    },
+
+  });
   const [result, setResult] = useState({});
   const connect = useCallback (() => {
-    console.log(form.getFieldsValue())
-    const formValues = form.getFieldsValue();
-    if (formValues.url && formValues.token) {
-      socket = socketIO(formValues.url,{
+    if (authorizationMeta) {
+      socket = socketIO(authorizationMeta.url,{
         transports: ["polling", "websocket"],
-        path: '/socket'
+        path: authorizationMeta.socketPath
       });
       socket.connect(() => {
         console.log(socket.id)
@@ -44,43 +64,26 @@ const App = () => {
       socket.on("connect_error", (error) => {
         console.log(error); // true
       });
-      socket.emit('AUTHORIZATION', ({
-        task: {
-          locale: "zh",
-          clientVersion: "webapp",
-        },
-        authorization: formValues.token
-       }), (response) => {
+      socket.emit(authorizationMeta.startEventName, authorizationMeta.taskMeta, (response) => {
         console.log(response.status); // ok
         message.success('鉴权成功')
       });
     } else {
       message.warning('请输入鉴权信息')
     }
-  }, [form]);
+  }, [authorizationMeta]);
 
-  const onFinish = useCallback((values) => {
+  const onFinish = useCallback(() => {
     if (socket && socket.connected) {
       setResult({});
-      socket.emit(values.startEventName, ({
-         meta,
-        "task": {
-          "name": "",
-          "dataSourceId": "baef693e-bbee-4bb2-a4f5-66bc538d3c66",
-          "locale": "zh",
-          "clientVersion": "webapp",
-          "traceId": "7e9e4e3d-6452-42f8-9c34-be824b8f7bca-1693293342858",
-          taskId: v4(),
-        },
-        "authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1MDgzNTQ0NC0xZjY5LTRmNTEtYmZlMy02ZGQyNDJiZDdmZTgiLCJleHAiOjM2ODk4NDE4MTksImF1dGhvcml0aWVzIjpbIlVTRVIiXSwianRpIjoiNWcxOHM5aVJtbFIyNDRXSE1sY2VoSmdESG0wIiwiY2xpZW50X2lkIjoib2ZmaWNpYWxfd2Vic2l0ZSIsInNjb3BlIjpbInJpc2tTeXN0ZW0iXX0.iLNVOa83FYsIywZ0mGEcxS-77X1lw_fN5O3onzNi_eRZ9RXN9MU1H9zWJvD-8TeYhOGVRCbxmEhNyYwxxKFRxdantl0gCyy70ZYLUOoJI3cqYA0dR3cNMgLxVIvAH1d51kb35W8P-AN9BNX-UmBxjlNBHB7Ladd_BvDVnGdBXq3sAY4IHaEKdf0T3kR9gVU2wsGmppN6PJlDsPqGkKTfuapjVS1odhNMydald3SAbjmWCjW6M36OdkMPAiFI9E69LvkYs6ZacBLKW_wVtkPHrZuuTEPoHs5hAUOi45Fp32U9V6RroNKQqUUU3GScRqBGKONhj2Kecm5p3fbqGrLtrA"
-       }), (response) => {
+      socket.emit(meta.startEventName, (meta.taskMeta), (response) => {
         console.log(response.status); // ok
       })
-      socket.on(values?.finishEventName, (response) => {
+      socket.on(meta?.finishEventName, (response) => {
         console.log(response)
         setResult({
           progress: 1,
-          data: response.view
+          data: response
         })
       })
       socket.on(PROGRESS, (response) => {
@@ -94,38 +97,52 @@ const App = () => {
     }
   }, [meta]);
   return (
-    <div className={style.Container}>
-      <Form
-      onFinish={onFinish}
-      initialValues={initialValues}
-      form={form}
-      labelCol={{ span: 6 }}
-      wrapperCol={{ span: 18 }}
-    >
-      <Form.Item  {...{ wrapperCol: { span: 14, offset: 8 } }}>
-        <h5>
-          SOCKET-CLIENT
+    <div style={{ padding: "10px 20px" }}>
+    <h5>
+          SOCKET--CLIENT
         </h5>
-      </Form.Item>
-      <Form.Item label="socketUrl" name="url">
-        <Input style={{ width: 500 }} />
-      </Form.Item>
-      <Form.Item label="TOKEN" name="token">
-        <Input.TextArea rows={3} style={{ width: 500 }} />
-      </Form.Item>
-      <Form.Item  {...{ wrapperCol: { span: 14, offset: 6 } }}>
-      <Button type="primary" onClick={connect}>
+        authorizationMeta:
+        <JSONInput
+        id="authorization"
+        locale={locale}
+        placeholder={authorizationMeta}
+        onBlur={(obj) => {
+          if (obj.error) {
+            console.log('ERROR: ', obj.error);
+          } else {
+            console.log(obj.plainText);
+            setAuthorizationMeta(obj.jsObject)
+          }
+        }}
+        colors={{
+          default: '#1E1E1E',
+          background: '#ffffff',
+          string: '#ce8453',
+          number: '#ce8453',
+          keys: '#386fa4',
+          background_warning: '#ffffff',
+        }}
+        style={{
+          outerBox: { border: '10px solid green' },
+          width: '100%'
+        }}
+        onChange={(obj) => {
+          if (obj.error) {
+            console.log('ERROR: ', obj.error);
+          } else {
+            console.log(obj.plainText);
+          }
+        }}
+       height="250px"
+       width='800px'
+      />
+      <Button type="primary" onClick={connect} style={{ margin: 20 }}>
           连接
-        </Button>
-      </Form.Item>
-      <Form.Item label="startEventName" name="startEventName">
-        <Input style={{ width: 500 }} />
-      </Form.Item>
-      <Form.Item label="finishEventName" name="finishEventName">
-      <Input style={{ width: 500 }} />
-      </Form.Item>
-      <Form.Item label="taskMeta">
-      <JSONInput
+      </Button>
+        <div>
+        taskMeta:
+       </div>
+        <JSONInput
         id="a_unique_id"
         locale={locale}
         placeholder={meta}
@@ -156,22 +173,15 @@ const App = () => {
           }
         }}
        height="250px"
+       width='800px'
       />
-      </Form.Item>
-      <Form.Item>
-      <Form.Item  {...{ wrapperCol: { span: 14, offset: 8 } }}>
-      <Space>
-
-        <Button type="primary" htmlType="submit">
+      <Space style={{ margin: 20 }}>
+        <Button type="primary" onClick={onFinish}>
           发送消息
         </Button>
+
         <Button onClick={() => setMeta({})}>清除meta</Button>
       </Space>
-      </Form.Item>
-
-    </Form.Item>
-    </Form>
-
     {result?.progress === -1 && (
        <Alert
        message="Error"
@@ -194,7 +204,7 @@ const App = () => {
           string: "green" // overrides theme colors with whatever color value you want
         }}
         height="550px"
-        width="100%"
+        width='800px'
        />
       )}
     </div>
